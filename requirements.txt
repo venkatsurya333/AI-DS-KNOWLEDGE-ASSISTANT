@@ -4,3 +4,5 @@ faiss-cpu
 google-genai
 streamlit
 langchain-text-splitters
+sentence-transformers
+numpy
