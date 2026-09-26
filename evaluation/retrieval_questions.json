@@ -1,0 +1,42 @@
+[
+    {
+        "question": "What is a Variational Autoencoder (VAE), and how does it differ from a standard autoencoder?",
+        "expected_source": "foster"
+    },
+    {
+        "question": "How does a Generative Adversarial Network (GAN) use a generator and discriminator during training?",
+        "expected_source": "foster"
+    },
+    {
+        "question": "What are the forward and reverse diffusion processes in a denoising diffusion model?",
+        "expected_source": "foster"
+    },
+    {
+        "question": "What are queries, keys, and values in the attention mechanism used by Transformer models?",
+        "expected_source": "foster"
+    },
+    {
+        "question": "Why is causal masking used in GPT, and how does positional encoding preserve the order of tokens?",
+        "expected_source": "foster"
+    },
+    {
+        "question": "What is tokenization in large language models, and how does a tokenizer prepare text before it is processed by the model?",
+        "expected_source": "llm"
+    },
+    {
+        "question": "What are text embeddings, and how are contextualized token embeddings different from static word representations?",
+        "expected_source": "llm"
+    },
+    {
+        "question": "What is prompt engineering, and what are some techniques used to improve the output of text generation models?",
+        "expected_source": "llm"
+    },
+    {
+        "question": "What is Retrieval-Augmented Generation (RAG), and how does it combine semantic search with language model generation?",
+        "expected_source": "llm"
+    },
+    {
+        "question": "What are the three main training stages of large language models described in the book, and what is the purpose of each stage?",
+        "expected_source": "llm"
+    }
+]

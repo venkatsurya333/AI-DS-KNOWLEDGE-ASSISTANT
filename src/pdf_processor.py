@@ -3,24 +3,30 @@ import pymupdf as fitz
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def load_pdf(pdf_path):
-    doc = fitz.open(pdf_path)
+    document = fitz.open(pdf_path)
+
     pages = []
-    for page_no,page in enumerate(doc):
+
+    for page_number, page in enumerate(document):
+
         text = page.get_text()
 
         if text.strip():
+
             pages.append({
-                "text":text,
-                "source":pdf_path,
-                "page":page_no+1
+                "text": text,
+                "source": pdf_path,
+                "page": page_number + 1
             })
-    doc.close()
+
+    document.close()
+
     return pages
 
 def create_chunks(pages):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size = 500,
-        chunk_overlap = 50 
+        chunk_size = 800,
+        chunk_overlap = 100 
     )
     chunks = []
     for page in pages:

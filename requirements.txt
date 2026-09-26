@@ -1,8 +1,9 @@
 PyMuPDF
 sentence-transformers
 faiss-cpu
-google-genai
+google-genai 
 streamlit
 langchain-text-splitters
 sentence-transformers
 numpy
+load_dotenv
