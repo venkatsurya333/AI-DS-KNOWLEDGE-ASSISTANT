@@ -1,0 +1,336 @@
+import os
+import shutil
+import json
+from pathlib import Path
+
+ROOT = Path(r"D:\Education\icfai\GenAI Project")
+CONFIG_DIR = ROOT / "config"
+DATA_SUBJECTS_DIR = ROOT / "data" / "subjects"
+
+CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+DATA_SUBJECTS_DIR.mkdir(parents=True, exist_ok=True)
+
+SUBJECTS = {
+    # 6 Core Subjects (Phase 1)
+    "generative_ai": {
+        "title": "Generative AI",
+        "category": "AI & Data Science",
+        "is_core": True,
+        "sources": [r"SEM-7\Gen AI"],
+        "description": "Foundations of Generative Models, GANs, VAEs, Transformers, LLMs, RAG, and Prompt Engineering."
+    },
+    "database_management_systems": {
+        "title": "Database Management Systems (DBMS)",
+        "category": "Computer Science Core",
+        "is_core": True,
+        "sources": [r"SEM-3\DBMS"],
+        "description": "Relational Models, SQL, Normalization, Transaction Processing, Concurrency Control, and Indexing."
+    },
+    "operating_systems": {
+        "title": "Operating Systems (OS)",
+        "category": "Computer Science Core",
+        "is_core": True,
+        "sources": [r"SEM-4\OS"],
+        "description": "Processes, Threads, CPU Scheduling, Synchronization, Deadlocks, Memory Management, and File Systems."
+    },
+    "computer_networks": {
+        "title": "Computer Networks (CN)",
+        "category": "Computer Science Core",
+        "is_core": True,
+        "sources": [r"SEM-5\Computer Networks(CN)"],
+        "description": "OSI and TCP/IP Reference Models, Data Link Layer, Network Layer Routing, Transport Layer, and Protocols."
+    },
+    "deep_learning": {
+        "title": "Deep Learning (DL)",
+        "category": "AI & Data Science",
+        "is_core": True,
+        "sources": [r"SEM-5\DEEP LEARNING(DL)"],
+        "description": "Feedforward Networks, Backpropagation, CNNs, RNNs/LSTMs, Optimization Algorithms, and Regularization."
+    },
+    "data_structures": {
+        "title": "Data Structures",
+        "category": "Computer Science Core",
+        "is_core": True,
+        "sources": [r"sem-2\DATA STRUCTURES"],
+        "description": "Arrays, Linked Lists, Stacks, Queues, Trees, Binary Search Trees, Heaps, Graphs, Hashing, and Sorting."
+    },
+
+    # Additional Subjects
+    "artificial_intelligence": {
+        "title": "Artificial Intelligence",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-3\AI"],
+        "description": "Search algorithms, heuristics, knowledge representation, logic, and expert systems."
+    },
+    "computer_organization_architecture": {
+        "title": "Computer Organization & Architecture (COA)",
+        "category": "Computer Science Core",
+        "is_core": False,
+        "sources": [r"SEM-4\COA"],
+        "description": "Instruction set architecture, CPU datapath, pipelining, cache memory, and I/O organization."
+    },
+    "design_analysis_algorithms": {
+        "title": "Design & Analysis of Algorithms (DAA)",
+        "category": "Computer Science Core",
+        "is_core": False,
+        "sources": [r"SEM-4\DAA"],
+        "description": "Asymptotic analysis, divide & conquer, greedy methods, dynamic programming, and graph algorithms."
+    },
+    "natural_language_processing": {
+        "title": "Natural Language Processing (NLP)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-6\NLP"],
+        "description": "Text preprocessing, N-grams, word embeddings, sequence modeling, transformers, and language models."
+    },
+    "reinforcement_learning": {
+        "title": "Reinforcement Learning (RL)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-6\RL"],
+        "description": "Markov Decision Processes, dynamic programming, Monte Carlo methods, Q-learning, and policy gradients."
+    },
+    "computer_vision": {
+        "title": "Computer Vision (CV)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-7\Computer Vision"],
+        "description": "Image processing, feature detection, object detection, segmentation, and convolutional neural networks."
+    },
+    "cloud_computing": {
+        "title": "Cloud Computing",
+        "category": "Cloud & Infrastructure",
+        "is_core": False,
+        "sources": [r"SEM-7\Cloud Computing"],
+        "description": "Cloud architectures, virtualization, IaaS/PaaS/SaaS, AWS/Azure services, and distributed storage."
+    },
+    "c_programming": {
+        "title": "Computer Programming (C Language)",
+        "category": "Computer Science",
+        "is_core": False,
+        "sources": [r"SEM-1\computer programing"],
+        "description": "C syntax, control flow, functions, arrays, pointers, structures, and file I/O."
+    },
+    "python_programming": {
+        "title": "Introduction to Computer Programming (Python)",
+        "category": "Computer Science",
+        "is_core": False,
+        "sources": [r"SEM-4\ICP(python)"],
+        "description": "Python syntax, data structures, OOP in Python, file handling, and libraries."
+    },
+    "web_technologies": {
+        "title": "Web Technologies",
+        "category": "Computer Science",
+        "is_core": False,
+        "sources": [r"SEM-4\WEB TECHNOLOGY"],
+        "description": "HTML, CSS, JavaScript, client-server web architecture, and backend development."
+    },
+    "object_oriented_programming": {
+        "title": "Object-Oriented Programming (Java / C++)",
+        "category": "Computer Science Core",
+        "is_core": False,
+        "sources": [r"SEM-3\OOP'S"],
+        "description": "Classes, inheritance, polymorphism, encapsulation, exception handling, and design patterns."
+    },
+    "discrete_mathematics": {
+        "title": "Discrete Mathematics",
+        "category": "Mathematics",
+        "is_core": False,
+        "sources": [r"SEM-3\DM(discreate maths)"],
+        "description": "Set theory, propositional logic, relations, functions, graph theory, and combinatorics."
+    },
+    "maths_for_machine_learning": {
+        "title": "Mathematics for Machine Learning (MEML)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-3\MEML"],
+        "description": "Linear algebra, matrix factorizations, vector calculus, probability, and optimization for ML."
+    },
+    "machine_learning_methods": {
+        "title": "Machine Learning Methods (MLM)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-4\MLM"],
+        "description": "Supervised learning, regression, classification, decision trees, SVM, clustering, and ensemble models."
+    },
+    "data_wrangling_visualization": {
+        "title": "Data Wrangling & Visualization (DWV)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-5\Data waranglling and visualization     (DWV)"],
+        "description": "Data cleaning, pandas, exploratory data analysis, plotting, and dashboard visualization."
+    },
+    "big_data_systems": {
+        "title": "Big Data Systems (BDS)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-6\BDS"],
+        "description": "Hadoop ecosystem, MapReduce, Spark, distributed file systems, and big data architecture."
+    },
+    "embedded_systems": {
+        "title": "Embedded Systems (ES)",
+        "category": "Core Engineering",
+        "is_core": False,
+        "sources": [r"SEM-6\ES"],
+        "description": "Microcontrollers, RTOS, embedded hardware interfacing, sensors, and firmware."
+    },
+    "formal_languages_automata": {
+        "title": "Frontier Technologies / Automata Theory (FRT)",
+        "category": "Computer Science Core",
+        "is_core": False,
+        "sources": [r"SEM-6\FRT"],
+        "description": "Automata theory, regular expressions, context-free grammars, Turing machines, and computability."
+    },
+    "human_computer_interaction": {
+        "title": "Human-Computer Interaction (HCI)",
+        "category": "Computer Science",
+        "is_core": False,
+        "sources": [r"SEM-7\Human Computer Vision (HCI)"],
+        "description": "UI/UX design principles, usability testing, human factors, and interaction paradigms."
+    },
+    "basic_electronics": {
+        "title": "Basic Electronics",
+        "category": "Core Engineering",
+        "is_core": False,
+        "sources": [r"SEM-1\basic electronics"],
+        "description": "Semiconductors, diodes, transistors, amplifiers, and operational circuits."
+    },
+    "engineering_chemistry": {
+        "title": "Engineering Chemistry",
+        "category": "Basic Sciences",
+        "is_core": False,
+        "sources": [r"SEM-1\chemistry icfai"],
+        "description": "Thermodynamics, chemical kinetics, electrochemistry, and material science."
+    },
+    "digital_fabrication": {
+        "title": "Digital Fabrication (DF)",
+        "category": "Engineering Workshop",
+        "is_core": False,
+        "sources": [r"SEM-1\digital fabrification(DF)"],
+        "description": "Rapid prototyping, 3D printing, CAD/CAM, and modern digital fabrication tools."
+    },
+    "indian_traditional_knowledge": {
+        "title": "Essence of Indian Traditional Knowledge (EITK)",
+        "category": "Humanities & Value Education",
+        "is_core": False,
+        "sources": [r"SEM-1\EITK", r"SEM-1\indian traditional knowlegae"],
+        "description": "Indian philosophical systems, traditional sciences, astronomy, and heritage."
+    },
+    "english_communication": {
+        "title": "English & Communication Skills",
+        "category": "Humanities",
+        "is_core": False,
+        "sources": [r"SEM-1\ENGLISH", r"sem-2\english skills"],
+        "description": "Technical writing, presentation skills, professional communication, and vocabulary."
+    },
+    "engineering_mathematics_1": {
+        "title": "Mathematics - I (Calculus & Linear Algebra)",
+        "category": "Basic Sciences",
+        "is_core": False,
+        "sources": [r"SEM-1\maths(M1)"],
+        "description": "Calculus, differential equations, matrices, and eigenvalues."
+    },
+    "engineering_graphics": {
+        "title": "Engineering Graphics / Drawing",
+        "category": "Core Engineering",
+        "is_core": False,
+        "sources": [r"sem-2\EG(engineering drawing)"],
+        "description": "Projections of points, lines, planes, solids, and isometric views."
+    },
+    "environmental_studies": {
+        "title": "Environmental Studies (EVS)",
+        "category": "Basic Sciences",
+        "is_core": False,
+        "sources": [r"sem-2\EVS"],
+        "description": "Ecosystems, biodiversity, environmental pollution, and sustainable development."
+    },
+    "data_science_concepts": {
+        "title": "Data Science Concepts (DSC)",
+        "category": "AI & Data Science",
+        "is_core": False,
+        "sources": [r"SEM-3\DSC"],
+        "description": "Foundations of data science, statistics, data gathering, and analytical methods."
+    },
+    "internet_of_things": {
+        "title": "Internet of Things (IoT)",
+        "category": "Computer Science / Embedded",
+        "is_core": False,
+        "sources": [r"SEM-3\IOT"],
+        "description": "IoT architecture, sensor networks, wireless protocols, and cloud IoT integration."
+    },
+    "engineering_economics_management": {
+        "title": "Engineering Economics & Management (EEM)",
+        "category": "Management",
+        "is_core": False,
+        "sources": [r"SEM-4\EEM"],
+        "description": "Economic evaluation of engineering projects, cost accounting, and managerial principles."
+    },
+    "power_skills_2": {
+        "title": "Power Skills - II",
+        "category": "Professional Development",
+        "is_core": False,
+        "sources": [r"SEM-4\POWER SKILLS -2"],
+        "description": "Soft skills, leadership, teamwork, and professional ethics."
+    },
+    "ethical_hacking": {
+        "title": "Ethical Hacking & Cybersecurity",
+        "category": "Cybersecurity",
+        "is_core": False,
+        "sources": [r"SEM-5\ETHICAL HACKING"],
+        "description": "Penetration testing, vulnerabilities, network attacks, and defensive security measures."
+    },
+    "mathematical_optimization": {
+        "title": "Mathematical Optimization (MO)",
+        "category": "Mathematics",
+        "is_core": False,
+        "sources": [r"SEM-5\MO"],
+        "description": "Linear programming, simplex algorithm, duality, and convex optimization."
+    },
+    "entrepreneurship": {
+        "title": "Introduction to Entrepreneurship (IE)",
+        "category": "Management",
+        "is_core": False,
+        "sources": [r"SEM-7\IE(Introduction to Entraprenurship)"],
+        "description": "Opportunity assessment, business model canvas, startup financing, and venture creation."
+    }
+}
+
+# Save catalog JSON
+catalog_path = CONFIG_DIR / "subjects_catalog.json"
+with open(catalog_path, "w", encoding="utf-8") as f:
+    json.dump(SUBJECTS, f, indent=2)
+
+print(f"Catalog saved to {catalog_path}")
+
+# Populate data/subjects for the 6 core subjects
+SUPPORTED_EXTS = {".pdf", ".pptx", ".ppt", ".docx", ".txt"}
+EXCLUDE_STRS = ["mmyenv", "venv", ".venv", ".git", "__pycache__", "Poject", "project sources"]
+
+for subj_id, subj_info in SUBJECTS.items():
+    if not subj_info["is_core"]:
+        continue
+    
+    target_dir = DATA_SUBJECTS_DIR / subj_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+    
+    copied = 0
+    for src_rel in subj_info["sources"]:
+        src_path = ROOT / src_rel
+        if not src_path.exists():
+            continue
+        
+        for root, dirs, files in os.walk(src_path):
+            dirs[:] = [d for d in dirs if not any(ex in d for ex in EXCLUDE_STRS)]
+            for file in files:
+                ext = Path(file).suffix.lower()
+                if ext in SUPPORTED_EXTS:
+                    full_src = Path(root) / file
+                    dest_file = target_dir / file
+                    if not dest_file.exists():
+                        shutil.copy2(full_src, dest_file)
+                    copied += 1
+                    
+    print(f"Copied {copied} files to {target_dir.relative_to(ROOT)}")
+
+print("Core subjects setup complete.")

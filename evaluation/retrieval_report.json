@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-11-03 20:26:51",
+  "top_k": 5,
+  "metrics": {
+    "top1_accuracy_percent": 87.5,
+    "top3_accuracy_percent": 100.0,
+    "top5_accuracy_percent": 100.0,
+    "subject_isolation_percent": 100.0,
+    "citation_provenance_percent": 96.0,
+    "total_testable_queries": 8,
+    "total_chunks_inspected": 50
+  },
+  "details": [
+    {
+      "id": "q1",
+      "question": "What is a Variational Autoencoder and how does the latent space work?",
+      "subject": "generative_ai",
+      "retrieved_count": 5,
+      "top_source": "David Foster - Generative Deep Learning_ Teaching Machines To Paint, Write, Compose, and Play (2023, O'Reilly Media) - libgen.li (2).pdf",
+      "top_distance": 0.5399882197380066
+    },
+    {
+      "id": "q2",
+      "question": "What is the role of the discriminator in a Generative Adversarial Network?",
+      "subject": "generative_ai",
+      "retrieved_count": 5,
+      "top_source": "David Foster - Generative Deep Learning_ Teaching Machines To Paint, Write, Compose, and Play (2023, O'Reilly Media) - libgen.li (2).pdf",
+      "top_distance": 0.685661792755127
+    },
+    {
+      "id": "q3",
+      "question": "How does self-attention work in Transformer models?",
+      "subject": "generative_ai",
+      "retrieved_count": 5,
+      "top_source": "Hands-On Large Language Models_ Language Understanding and Generation{Jay Alammar, Maarten Grootendorst}(2024, O\u2019Reilly Media){107327997} libgen.li (1).pdf",
+      "top_distance": 0.5249210000038147
+    },
+    {
+      "id": "q4",
+      "question": "What is a Process Control Block (PCB) and what information does it store?",
+      "subject": "operating_systems",
+      "retrieved_count": 5,
+      "top_source": "2_OS_module2_ppk.pptx",
+      "top_distance": 0.3407643437385559
+    },
+    {
+      "id": "q5",
+      "question": "What are the four necessary conditions for a deadlock to occur?",
+      "subject": "operating_systems",
+      "retrieved_count": 5,
+      "top_source": "3.2 Deadlock.pptx",
+      "top_distance": 0.4775468111038208
+    },
+    {
+      "id": "q6",
+      "question": "Explain the Banker's algorithm for deadlock avoidance.",
+      "subject": "operating_systems",
+      "retrieved_count": 5,
+      "top_source": "3.2 Deadlock.pptx",
+      "top_distance": 0.4537051022052765
+    },
+    {
+      "id": "q7",
+      "question": "What are the seven layers of the OSI reference model?",
+      "subject": "computer_networks",
+      "retrieved_count": 5,
+      "top_source": "3-Layering-osi-tcp-FINAL.pptx",
+      "top_distance": 0.7946164608001709
+    },
+    {
+      "id": "q8",
+      "question": "Explain error detection using Longitudinal Redundancy Check (LRC) in the data link layer.",
+      "subject": "computer_networks",
+      "retrieved_count": 5,
+      "top_source": "3-Layering-osi-tcp-FINAL.pptx",
+      "top_distance": 0.7535542845726013
+    },
+    {
+      "id": "q9_isolation",
+      "question": "What are the states of a process in CPU scheduling?",
+      "subject": "operating_systems",
+      "retrieved_count": 5,
+      "top_source": "2.4 Process Scheduler.pdf",
+      "top_distance": 0.7089170813560486
+    },
+    {
+      "id": "q10_unsupported",
+      "question": "What is the ICFAI university library book return penalty policy and fine schedule?",
+      "subject": "operating_systems",
+      "retrieved_count": 5,
+      "top_source": "Student Lab Manual of OS CS302.docx",
+      "top_distance": 1.321041226387024
+    }
+  ]
+}

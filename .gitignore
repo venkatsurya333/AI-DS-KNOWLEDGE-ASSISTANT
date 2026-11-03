@@ -1,5 +1,43 @@
+# Virtual environments
+venv/
 .venv/
+mmyenv/
+env/
+
+# Python cache & artifacts
 __pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Secrets & Environment variables (NEVER COMMIT)
 .env
-*.pyc
+.env.local
+*.key
+
+# Large archive files & scratch folders
+*.zip
+*.tar.gz
+academic-rag-assistant.zip
+academic-rag-repo/
+scratch/
+
+# Vector database indexes
 vectorstore/
+
+# Raw university course archives
+SEM-1/
+sem-2/
+SEM-3/
+SEM-4/
+SEM-5/
+SEM-6/
+SEM-7/
+data/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
