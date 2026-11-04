@@ -212,6 +212,24 @@ You have been provided with excerpts from the university course materials for {s
         return stream_generator(), retrieved_chunks, subject_display
 
 
+_cached_pipeline: Optional[AcademicRAGPipeline] = None
+
+
+def get_rag_pipeline(
+    gemini_model: str = "gemini-2.5-flash",
+    search_engine: Optional[SubjectVectorSearch] = None,
+    force_reload: bool = False
+) -> AcademicRAGPipeline:
+    """Returns a singleton AcademicRAGPipeline instance."""
+    global _cached_pipeline
+    if _cached_pipeline is None or force_reload:
+        _cached_pipeline = AcademicRAGPipeline(
+            gemini_model=gemini_model,
+            search_engine=search_engine
+        )
+    return _cached_pipeline
+
+
 if __name__ == "__main__":
     pipeline = AcademicRAGPipeline()
     test_subj = "computer_networks"
