@@ -231,24 +231,40 @@ def get_subject_suggestions(subj_id: str, catalog: Dict[str, Any]) -> List[str]:
     ]
 
 
+def get_detected_api_key() -> Optional[str]:
+    """Detects Gemini API key from environment or Streamlit Cloud Secrets."""
+    key = os.getenv("GEMINI_API_KEY")
+    if not key:
+        try:
+            if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+                key = st.secrets["GEMINI_API_KEY"]
+        except Exception:
+            pass
+    return key
+
+
 # Cache the RAG pipeline as a persistent singleton resource
 @st.cache_resource(show_spinner="⏳ Initializing AI models & search engine...")
-def get_cached_pipeline():
+def get_cached_pipeline(api_key: Optional[str] = None):
     import importlib
     import src.rag_pipeline
     importlib.reload(src.rag_pipeline)
-    return src.rag_pipeline.AcademicRAGPipeline()
+    return src.rag_pipeline.AcademicRAGPipeline(api_key=api_key)
 
 
 # Load Metadata
 catalog = load_catalog()
 vector_meta = load_vectorstore_meta()
 
-# Ensure pipeline has latest methods
-pipeline = get_cached_pipeline()
+# Ensure pipeline has latest methods and active key
+detected_key = get_detected_api_key()
+pipeline = get_cached_pipeline(api_key=detected_key)
 if not hasattr(pipeline, "generate_response_stream") or not hasattr(pipeline, "ingest_file"):
     st.cache_resource.clear()
-    pipeline = get_cached_pipeline()
+    pipeline = get_cached_pipeline(api_key=detected_key)
+
+if detected_key and not pipeline.client:
+    pipeline.set_api_key(detected_key)
 
 # Session State Initialization
 if "messages" not in st.session_state:
@@ -290,6 +306,30 @@ with st.sidebar:
         index=0 if sorted_subject_ids else None,
         key="main_subject_selector"
     )
+
+    st.markdown("---")
+
+    # API Key Configuration
+    has_api_key = bool(pipeline.client)
+    with st.expander(
+        "🟢 Gemini API Connected" if has_api_key else "🔑 Gemini API Key Required",
+        expanded=not has_api_key
+    ):
+        if not has_api_key:
+            st.warning("A free Gemini API key is needed to synthesize grounded answers.")
+        user_key = st.text_input(
+            "Gemini API Key:",
+            value=pipeline.api_key or "",
+            type="password",
+            help="Get your free key from https://aistudio.google.com/app/apikey"
+        )
+        if user_key and (user_key.strip() != (pipeline.api_key or "") or not pipeline.client):
+            pipeline.set_api_key(user_key.strip())
+            os.environ["GEMINI_API_KEY"] = user_key.strip()
+            st.success("✅ Gemini API connected!")
+            st.rerun()
+
+        st.caption("☁️ On Streamlit Cloud: paste `GEMINI_API_KEY = \"...\"` under **Settings ➔ Secrets**.")
 
     st.markdown("---")
 
@@ -468,6 +508,14 @@ with m4:
     """, unsafe_allow_html=True)
 
 st.markdown("<div style='margin-bottom: 1.25rem;'></div>", unsafe_allow_html=True)
+
+# API Key Missing Alert
+if not pipeline.client:
+    st.error(
+        "⚠️ **Gemini API Key Required**: "
+        "Please enter your Gemini API Key in the left sidebar under **🔑 Gemini API Key Required**, "
+        "or on Streamlit Cloud add `GEMINI_API_KEY = \"your_key\"` under **App Settings ➔ Secrets**."
+    )
 
 
 # Quick Ingestion for Unindexed / Additional Materials

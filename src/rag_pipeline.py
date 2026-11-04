@@ -36,16 +36,31 @@ from src.search import SubjectVectorSearch, get_search_engine
 class AcademicRAGPipeline:
     def __init__(
         self,
+        api_key: Optional[str] = None,
         gemini_model: str = "gemini-2.5-flash",
         search_engine: Optional[SubjectVectorSearch] = None
     ):
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
-            print("[Warning] GEMINI_API_KEY not found in environment or .env file.")
+            try:
+                import streamlit as st
+                if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+                    self.api_key = st.secrets["GEMINI_API_KEY"]
+            except Exception:
+                pass
+
+        if not self.api_key:
+            print("[Warning] GEMINI_API_KEY not found in environment, st.secrets, or .env file.")
 
         self.client = genai.Client(api_key=self.api_key) if self.api_key else None
         self.gemini_model = gemini_model
         self.search_engine = search_engine or get_search_engine()
+
+    def set_api_key(self, api_key: str):
+        """Dynamically updates the Gemini API key and reinitializes the client."""
+        if api_key and api_key.strip():
+            self.api_key = api_key.strip()
+            self.client = genai.Client(api_key=self.api_key)
 
     def build_prompt_and_context(
         self,
@@ -240,6 +255,7 @@ _cached_pipeline: Optional[AcademicRAGPipeline] = None
 
 
 def get_rag_pipeline(
+    api_key: Optional[str] = None,
     gemini_model: str = "gemini-2.5-flash",
     search_engine: Optional[SubjectVectorSearch] = None,
     force_reload: bool = False
@@ -248,6 +264,7 @@ def get_rag_pipeline(
     global _cached_pipeline
     if _cached_pipeline is None or force_reload:
         _cached_pipeline = AcademicRAGPipeline(
+            api_key=api_key,
             gemini_model=gemini_model,
             search_engine=search_engine
         )
