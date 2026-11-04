@@ -12,6 +12,13 @@ An AI-powered academic assistant for university students. Allows students to que
   - **PDFs**: Extracted via PyMuPDF with 1-indexed page numbers.
   - **PPTXs**: Extracted via `python-pptx` with slide numbers and slide titles.
   - **DOCX / TXT**: Paragraph and document-level metadata tracking.
+  - **Live Dynamic File Upload**: Upload course notes/slides directly through the web UI and query them immediately without rebuilding or restarting.
+- **Modern Executive User Interface**:
+  - **Glassmorphic Hero & KPI Strip**: Displays active subject domain, indexed document counts, knowledge vectors, and AI reasoning engine.
+  - **Clickable Suggested Questions**: 1-click prompt starter chips for instant conceptual and exam review queries.
+  - **Real-Time Token Streaming**: Instant response output with sub-second time-to-first-token.
+  - **Rich Source Citations**: Format badges (`[PDF]`, `[PPTX]`), exact slide/page locations, and relevance match scores.
+  - **Study Notes Export**: Download full Q&A sessions with verified citations as formatted Markdown (`.md`) files.
 - **Dual-Mode Gemini Grounding**:
   - Grounded claims cite exact files and page/slide numbers (e.g. `[3.2 Deadlock.pptx, Slide 5]`, `[2.8 Thread Management.pdf, Page 1]`).
   - Missing course information is clearly acknowledged (*"The uploaded course material does not contain..."*).
