@@ -211,6 +211,30 @@ You have been provided with excerpts from the university course materials for {s
 
         return stream_generator(), retrieved_chunks, subject_display
 
+    def ingest_file(
+        self,
+        file_path: str,
+        subject_id: str,
+        subject_title: str,
+        chunk_size: int = 800,
+        chunk_overlap: int = 100
+    ) -> int:
+        """
+        Loads, chunks, and incrementally indexes a single document into the active vector store.
+        Returns the number of chunks added.
+        """
+        from src.document_loader import load_document, create_chunks
+
+        docs = load_document(file_path, subject_id=subject_id, subject_title=subject_title)
+        if not docs:
+            return 0
+
+        chunks = create_chunks(docs, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        if not chunks:
+            return 0
+
+        return self.search_engine.add_documents(chunks, persist=True)
+
 
 _cached_pipeline: Optional[AcademicRAGPipeline] = None
 

@@ -10,7 +10,9 @@ Enforces strict subject-wise filtering:
 
 import os
 import sys
+import json
 import pickle
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -40,25 +42,26 @@ class SubjectVectorSearch:
         self.vectorstore_path = ROOT_DIR / vectorstore_dir
         self.index_file = self.vectorstore_path / "index.faiss"
         self.chunks_file = self.vectorstore_path / "chunks.pkl"
+        self.meta_file = self.vectorstore_path / "metadata.json"
+        self.embedding_model_name = embedding_model_name
 
-        if not self.index_file.exists() or not self.chunks_file.exists():
-            raise FileNotFoundError(
-                f"Vectorstore files not found in {self.vectorstore_path}. "
-                "Please run src/build_vectorstore.py first."
-            )
-
-        # Load FAISS index
-        self.index = faiss.read_index(str(self.index_file))
-
-        # Load chunks metadata
-        with open(self.chunks_file, "rb") as f:
-            self.chunks = pickle.load(f)
+        self.vectorstore_path.mkdir(parents=True, exist_ok=True)
 
         # Load embedding model (prefer local cache to avoid HuggingFace ping)
         try:
             self.model = SentenceTransformer(embedding_model_name, local_files_only=True)
         except Exception:
             self.model = SentenceTransformer(embedding_model_name)
+
+        # Load FAISS index and chunks
+        if self.index_file.exists() and self.chunks_file.exists():
+            self.index = faiss.read_index(str(self.index_file))
+            with open(self.chunks_file, "rb") as f:
+                self.chunks = pickle.load(f)
+        else:
+            dim = self.model.get_sentence_embedding_dimension() or 384
+            self.index = faiss.IndexFlatL2(dim)
+            self.chunks = []
 
         # Index chunk positions by subject for fast filtering
         self.subject_indices = {}
@@ -67,6 +70,90 @@ class SubjectVectorSearch:
             if s_id not in self.subject_indices:
                 self.subject_indices[s_id] = []
             self.subject_indices[s_id].append(idx)
+
+    def add_documents(
+        self,
+        new_chunks: List[Dict[str, Any]],
+        persist: bool = True
+    ) -> int:
+        """
+        Incrementally embeds and adds new document chunks into the live FAISS index
+        and optionally persists changes to disk (index.faiss, chunks.pkl, metadata.json).
+        Returns the number of chunks added.
+        """
+        if not new_chunks:
+            return 0
+
+        # 1. Embed text chunks
+        texts = [chunk["text"] for chunk in new_chunks]
+        embeddings = self.model.encode(texts, show_progress_bar=False, batch_size=32)
+        embeddings = np.asarray(embeddings).astype("float32")
+
+        # 2. Add embeddings to FAISS index
+        self.index.add(embeddings)
+
+        # 3. Update chunk list and subject indices
+        start_idx = len(self.chunks)
+        self.chunks.extend(new_chunks)
+        for i, chunk in enumerate(new_chunks):
+            s_id = chunk.get("subject_id", "unknown")
+            if s_id not in self.subject_indices:
+                self.subject_indices[s_id] = []
+            self.subject_indices[s_id].append(start_idx + i)
+
+        # 4. Persist to disk
+        if persist:
+            faiss.write_index(self.index, str(self.index_file))
+            with open(self.chunks_file, "wb") as f:
+                pickle.dump(self.chunks, f)
+
+            meta = {}
+            if self.meta_file.exists():
+                try:
+                    with open(self.meta_file, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                except Exception:
+                    meta = {}
+
+            meta["created_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            meta["total_chunks"] = len(self.chunks)
+            meta["embedding_model"] = self.embedding_model_name
+            meta["dimension"] = int(self.index.d)
+            if "subjects" not in meta:
+                meta["subjects"] = {}
+
+            for chunk in new_chunks:
+                s_id = chunk.get("subject_id", "unknown")
+                s_title = chunk.get("subject_title", s_id)
+                if s_id not in meta["subjects"]:
+                    meta["subjects"][s_id] = {
+                        "title": s_title,
+                        "files_count": 0,
+                        "chunks_count": 0
+                    }
+                meta["subjects"][s_id]["chunks_count"] += 1
+
+            for s_id in meta["subjects"]:
+                subj_files = {
+                    c.get("source_file")
+                    for c in self.chunks
+                    if c.get("subject_id") == s_id and c.get("source_file")
+                }
+                meta["subjects"][s_id]["files_count"] = len(subj_files)
+
+            with open(self.meta_file, "w", encoding="utf-8") as f:
+                json.dump(meta, f, indent=2)
+
+        return len(new_chunks)
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Returns current index statistics."""
+        return {
+            "total_chunks": len(self.chunks),
+            "faiss_total": int(self.index.ntotal),
+            "subjects_count": len(self.subject_indices),
+            "indexed_subjects": list(self.subject_indices.keys())
+        }
 
     def search(
         self,

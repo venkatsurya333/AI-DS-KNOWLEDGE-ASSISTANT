@@ -97,7 +97,7 @@ vector_meta = load_vectorstore_meta()
 
 # Pre-warm pipeline so it's instant when user asks a question
 pipeline = get_cached_pipeline()
-if not hasattr(pipeline, "generate_response_stream"):
+if not hasattr(pipeline, "generate_response_stream") or not hasattr(pipeline, "ingest_file"):
     st.cache_resource.clear()
     pipeline = get_cached_pipeline()
 
@@ -150,6 +150,60 @@ with st.sidebar:
 
     st.divider()
 
+    # File Upload Section in Sidebar
+    st.subheader("📤 Upload Material")
+    with st.expander("Upload & Index New File", expanded=False):
+        upload_target_subj = st.selectbox(
+            "Assign to Subject:",
+            options=sorted_subject_ids,
+            format_func=format_subject_label,
+            index=sorted_subject_ids.index(selected_subject_id) if selected_subject_id in sorted_subject_ids else 0,
+            key="sidebar_upload_subject_select"
+        )
+        uploaded_files = st.file_uploader(
+            "Select files:",
+            type=["pdf", "pptx", "docx", "txt"],
+            accept_multiple_files=True,
+            key="sidebar_academic_uploader",
+            help="Supported: PDF (page citations), PPTX (slide citations), DOCX, TXT"
+        )
+        if uploaded_files:
+            if st.button("⚡ Index Uploaded Material", type="primary", use_container_width=True, key="sidebar_index_btn"):
+                target_info = catalog.get(upload_target_subj, {})
+                target_title = target_info.get("title", upload_target_subj)
+                dest_dir = ROOT_DIR / "data" / "subjects" / upload_target_subj
+                dest_dir.mkdir(parents=True, exist_ok=True)
+
+                total_new_chunks = 0
+                sidebar_prog = st.progress(0.0)
+                sidebar_status = st.empty()
+
+                for idx, uf in enumerate(uploaded_files):
+                    sidebar_status.info(f"Indexing ({idx+1}/{len(uploaded_files)}): `{uf.name}`...")
+                    save_path = dest_dir / uf.name
+                    with open(save_path, "wb") as f:
+                        f.write(uf.getbuffer())
+
+                    added = pipeline.ingest_file(
+                        str(save_path),
+                        subject_id=upload_target_subj,
+                        subject_title=target_title
+                    )
+                    total_new_chunks += added
+                    sidebar_prog.progress((idx + 1) / len(uploaded_files))
+
+                sidebar_status.empty()
+                sidebar_prog.empty()
+
+                if total_new_chunks > 0:
+                    st.success(f"✅ Indexed {len(uploaded_files)} file(s) ({total_new_chunks} chunks) into **{target_title}**!")
+                    st.cache_data.clear()
+                    st.rerun()
+                else:
+                    st.warning("⚠️ No extractable text found in uploaded file(s).")
+
+    st.divider()
+
     # Indexing status card
     if vector_meta:
         st.caption(f"**Index Status**: {vector_meta.get('total_chunks', 0):,} chunks indexed.")
@@ -168,10 +222,56 @@ subject_desc = current_subject_info.get("description", "")
 st.markdown(f'<div class="main-header">📚 {subject_title}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-header">Category: <b>{subject_category}</b> &nbsp;|&nbsp; <i>{subject_desc}</i></div>', unsafe_allow_html=True)
 
-# Warning if subject not indexed yet
+# Warning & Quick Upload if subject not indexed yet
 is_indexed = selected_subject_id in indexed_subjects if vector_meta else False
-if not is_indexed and not cross_subject:
-    st.info(f"ℹ️ Course materials for **{subject_title}** are cataloged. When indexing finishes or in cross-subject mode, full document search is enabled.")
+
+with st.expander(
+    f"📤 Upload Course Notes / Slides for {subject_title}" if is_indexed else f"⚠️ No Notes Indexed Yet — Click to Upload for {subject_title}",
+    expanded=not is_indexed
+):
+    if not is_indexed:
+        st.info(f"💡 No course materials are currently indexed for **{subject_title}**. Drop your lecture slides (PPTX), textbooks (PDF), or notes (DOCX/TXT) below to start asking questions immediately!")
+    else:
+        st.markdown(f"Add extra PDFs, PPTX presentations, or documents directly to **{subject_title}**.")
+
+    main_uploaded_files = st.file_uploader(
+        f"Choose files for {subject_title}:",
+        type=["pdf", "pptx", "docx", "txt"],
+        accept_multiple_files=True,
+        key=f"main_uploader_{selected_subject_id}"
+    )
+    if main_uploaded_files:
+        if st.button(f"⚡ Index Material for {subject_title}", type="primary", key=f"main_index_btn_{selected_subject_id}"):
+            dest_dir = ROOT_DIR / "data" / "subjects" / selected_subject_id
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            total_chunks = 0
+            main_prog = st.progress(0.0)
+            main_status = st.empty()
+
+            for idx, uf in enumerate(main_uploaded_files):
+                main_status.info(f"Indexing ({idx+1}/{len(main_uploaded_files)}): `{uf.name}`...")
+                save_path = dest_dir / uf.name
+                with open(save_path, "wb") as f:
+                    f.write(uf.getbuffer())
+
+                added = pipeline.ingest_file(
+                    str(save_path),
+                    subject_id=selected_subject_id,
+                    subject_title=subject_title
+                )
+                total_chunks += added
+                main_prog.progress((idx + 1) / len(main_uploaded_files))
+
+            main_status.empty()
+            main_prog.empty()
+
+            if total_chunks > 0:
+                st.success(f"✅ Successfully indexed {len(main_uploaded_files)} file(s) ({total_chunks} chunks)! Ready to query.")
+                st.cache_data.clear()
+                st.rerun()
+            else:
+                st.warning("⚠️ No extractable text found in uploaded file(s).")
 
 # Initialize Chat History
 if "messages" not in st.session_state:
