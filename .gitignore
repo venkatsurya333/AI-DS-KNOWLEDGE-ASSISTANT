@@ -22,8 +22,7 @@ academic-rag-assistant.zip
 academic-rag-repo/
 scratch/
 
-# Vector database indexes
-vectorstore/
+
 
 # Raw university course archives
 SEM-1/

@@ -1,0 +1,26 @@
+{
+  "created_at": "2026-11-03 20:22:55",
+  "total_chunks": 3344,
+  "embedding_model": "all-MiniLM-L6-v2",
+  "dimension": 384,
+  "chunk_size": 800,
+  "chunk_overlap": 100,
+  "subjects": {
+    "generative_ai": {
+      "title": "Generative AI",
+      "files_count": 8,
+      "chunks_count": 2672
+    },
+    "operating_systems": {
+      "title": "Operating Systems (OS)",
+      "files_count": 23,
+      "chunks_count": 470
+    },
+    "computer_networks": {
+      "title": "Computer Networks (CN)",
+      "files_count": 6,
+      "chunks_count": 202
+    }
+  },
+  "build_duration_seconds": 363.92
+}
